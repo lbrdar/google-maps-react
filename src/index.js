@@ -19,11 +19,33 @@ const mapStyles = {
   }
 }
 
-const evtNames = ['ready', 'click', 'dragend', 'recenter'];
+const evtNames = [
+  'ready',
+  'click',
+  'dragend',
+  'recenter',
+  'bounds_changed',
+  'center_changed',
+  'dblclick',
+  'dragstart',
+  'heading_change',
+  'idle',
+  'maptypeid_changed',
+  'mousemove',
+  'mouseout',
+  'mouseover',
+  'projection_changed',
+  'resize',
+  'rightclick',
+  'tilesloaded',
+  'tilt_changed',
+  'zoom_changed'
+];
 
 export {wrapper as GoogleApiWrapper} from './GoogleApiComponent'
 export {Marker} from './components/Marker'
 export {InfoWindow} from './components/InfoWindow'
+export {HeatMap} from './components/HeatMap'
 
 export class Map extends React.Component {
     constructor(props) {
@@ -102,11 +124,37 @@ export class Map extends React.Component {
         const mapRef = this.refs.map;
         const node = ReactDOM.findDOMNode(mapRef);
         const curr = this.state.currentLocation;
-        let center = new maps.LatLng(curr.lat, curr.lng)
+        const center = new maps.LatLng(curr.lat, curr.lng);
 
-        let mapConfig = Object.assign({}, {
-          center,
-          zoom: this.props.zoom
+        const mapTypeIds = this.props.google.maps.MapTypeId || {};
+        const mapTypeFromProps = String(this.props.mapType).toUpperCase();
+
+        const mapConfig = Object.assign({}, {
+          mapTypeId: mapTypeIds[mapTypeFromProps],
+          center: center,
+          zoom: this.props.zoom,
+          maxZoom: this.props.maxZoom,
+          minZoom: this.props.maxZoom,
+          clickableIcons: this.props.clickableIcons,
+          disableDefaultUI: this.props.disableDefaultUI,
+          zoomControl: this.props.zoomControl,
+          mapTypeControl: this.props.mapTypeControl,
+          scaleControl: this.props.scaleControl,
+          streetViewControl: this.props.streetViewControl,
+          panControl: this.props.panControl,
+          rotateControl: this.props.rotateControl,
+          scrollwheel: this.props.scrollwheel,
+          draggable: this.props.draggable,
+          keyboardShortcuts: this.props.keyboardShortcuts,
+          disableDoubleClickZoom: this.props.disableDoubleClickZoom,
+          noClear: this.props.noClear,
+          styles: this.props.styles
+        });
+
+        Object.keys(mapConfig).forEach((key) => {
+          if (!mapConfig[key]) {
+            delete mapConfig[key];
+          }
         });
 
         this.map = new maps.Map(node, mapConfig);
@@ -204,7 +252,24 @@ Map.propTypes = {
   className: T.string,
   style: T.object,
   containerStyle: T.object,
-  visible: T.bool
+  visible: T.bool,
+  mapType: T.string,
+  maxZoom: T.number,
+  minZoom: T.number,
+  clickableIcons: T.bool,
+  disableDefaultUI: T.bool,
+  zoomControl: T.bool,
+  mapTypeControl: T.bool,
+  scaleControl: T.bool,
+  streetViewControl: T.bool,
+  panControl: T.bool,
+  rotateControl: T.bool,
+  scrollwheel: T.bool,
+  draggable: T.bool,
+  keyboardShortcuts: T.bool,
+  disableDoubleClickZoom: T.bool,
+  noClear: T.bool,
+  styles: T.array
 }
 
 evtNames.forEach(e => Map.propTypes[camelize(e)] = T.func)

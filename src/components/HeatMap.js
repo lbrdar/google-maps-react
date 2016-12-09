@@ -16,66 +16,71 @@ const wrappedPromise = function() {
     return wrappedPromise;
 }
 
-export class Marker extends React.Component {
+export class HeatMap extends React.Component {
 
   componentDidMount() {
-    this.markerPromise = wrappedPromise();
-    this.renderMarker();
+    this.heatMapPromise = wrappedPromise();
+    this.renderHeatMap();
   }
 
   componentDidUpdate(prevProps) {
     if ((this.props.map !== prevProps.map) ||
       (this.props.position !== prevProps.position)) {
-        if (this.marker) {
-            this.marker.setMap(null);
+        if (this.heatMap) {
+          this.heatMap.setMap(null);
+          this.renderHeatMap();
         }
-        this.renderMarker();
     }
   }
 
   componentWillUnmount() {
-    if (this.marker) {
-      this.marker.setMap(null);
+    if (this.heatMap) {
+      this.heatMap.setMap(null);
     }
   }
 
-  renderMarker() {
+  renderHeatMap() {
     let {
-      map, google, position, mapCenter, icon, label
+      map, google, positions, mapCenter, icon, gradient, radius, opacity
     } = this.props;
+
     if (!google) {
-      return null
+        return null;
     }
 
-    let pos = position || mapCenter;
-    if (!(pos instanceof google.maps.LatLng)) {
-      position = new google.maps.LatLng(pos.lat, pos.lng);
-    }
+    positions = positions.map((pos) => {
+        return new google.maps.LatLng(pos.lat, pos.lng);
+    });
 
     const pref = {
       map: map,
-      position: position,
-      icon: icon,
-      label: label
+      data: positions,
     };
-    this.marker = new google.maps.Marker(pref);
+
+    this.heatMap = new google.maps.visualization.HeatmapLayer(pref);
+
+    this.heatMap.set('gradient', gradient);
+
+    this.heatMap.set('radius', radius === undefined ? 20 : radius);
+
+    this.heatMap.set('opacity', opacity === undefined ? 0.2 : opacity);
 
     evtNames.forEach(e => {
-      this.marker.addListener(e, this.handleEvent(e));
+      this.heatMap.addListener(e, this.handleEvent(e));
     });
 
-    this.markerPromise.resolve(this.marker);
+    this.heatMapPromise.resolve(this.heatMap);
   }
 
-  getMarker() {
-    return this.markerPromise;
+  getHeatMap() {
+    return this.heatMapPromise;
   }
 
   handleEvent(evt) {
     return (e) => {
       const evtName = `on${camelize(evt)}`
       if (this.props[evtName]) {
-        this.props[evtName](this.props, this.marker, e);
+        this.props[evtName](this.props, this.heatMap, e);
       }
     }
   }
@@ -85,16 +90,16 @@ export class Marker extends React.Component {
   }
 }
 
-Marker.propTypes = {
+HeatMap.propTypes = {
   position: T.object,
   map: T.object,
   icon: T.string
 }
 
-evtNames.forEach(e => Marker.propTypes[e] = T.func)
+evtNames.forEach(e => HeatMap.propTypes[e] = T.func)
 
-Marker.defaultProps = {
-  name: 'Marker'
+HeatMap.defaultProps = {
+  name: 'HeatMap'
 }
 
-export default Marker
+export default HeatMap
